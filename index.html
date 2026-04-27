@@ -106,9 +106,16 @@
     }
     pre {
       background: #0d0d0d; border: 1px solid var(--bg3); border-radius: 8px;
-      padding: 16px 20px; margin-top: 12px; overflow-x: auto;
+      padding: 16px 20px; margin-top: 12px; overflow-x: auto; position: relative;
     }
     pre code { background: none; padding: 0; font-size: .88rem; line-height: 1.6; }
+    .copy-btn {
+      position: absolute; top: 8px; right: 8px;
+      background: var(--bg3); color: var(--text3); border: none; cursor: pointer;
+      padding: 4px 10px; border-radius: 6px; font-size: .78rem; transition: all .15s;
+    }
+    .copy-btn:hover { background: var(--bg2); color: var(--text); }
+    .copy-btn.copied { background: rgba(16,185,129,.25); color: #6ee7b7; }
     .tip {
       background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3);
       border-radius: 8px; padding: 10px 16px; color: #a7f3d0;
@@ -302,5 +309,24 @@ winget install ffmpeg</code></pre>
   © 2026 <a href="https://github.com/TatsuyaFushimi">TatsuyaFushimi</a> &nbsp;·&nbsp; MIT License
 </footer>
 
+<script>
+  document.querySelectorAll('pre').forEach(function(pre) {
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.textContent = 'コピー';
+    pre.appendChild(btn);
+    btn.addEventListener('click', function() {
+      var text = pre.querySelector('code') ? pre.querySelector('code').innerText : pre.innerText;
+      navigator.clipboard.writeText(text).then(function() {
+        btn.textContent = 'コピーしました ✓';
+        btn.classList.add('copied');
+        setTimeout(function() {
+          btn.textContent = 'コピー';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+  });
+</script>
 </body>
 </html>
