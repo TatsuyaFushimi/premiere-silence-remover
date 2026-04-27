@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premiere Pro 自動無音削除ツール</title>
+  <style>
+    :root {
+      --bg:      #111827;
+      --bg2:     #1f2937;
+      --bg3:     #374151;
+      --accent:  #f59e0b;
+      --accent2: #fbbf24;
+      --text:    #f9fafb;
+      --text2:   #d1d5db;
+      --text3:   #9ca3af;
+      --green:   #10b981;
+      --r:       12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
+      background: var(--bg); color: var(--text); line-height: 1.7;
+    }
+    a { color: var(--accent); }
+
+    /* ── Header ── */
+    header {
+      background: var(--bg2); border-bottom: 1px solid var(--bg3);
+      padding: 18px 40px; font-size: 1rem; font-weight: 700; color: var(--accent);
+    }
+
+    /* ── Hero ── */
+    .hero { max-width: 860px; margin: 80px auto 60px; padding: 0 24px; text-align: center; }
+    .tag {
+      display: inline-block; background: rgba(245,158,11,.15); color: var(--accent);
+      border: 1px solid rgba(245,158,11,.35); padding: 4px 18px; border-radius: 20px;
+      font-size: .85rem; margin-bottom: 22px;
+    }
+    .hero h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 800; line-height: 1.3; margin-bottom: 18px; }
+    .hero h1 span { color: var(--accent); }
+    .hero p { font-size: 1.05rem; color: var(--text2); max-width: 580px; margin: 0 auto 40px; }
+
+    /* ── Buttons ── */
+    .btns { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 40px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 26px; border-radius: var(--r); font-size: .95rem; font-weight: 600;
+      text-decoration: none; transition: all .18s; border: none; cursor: pointer;
+    }
+    .btn-gold  { background: var(--accent); color: #111; }
+    .btn-gold:hover  { background: var(--accent2); transform: translateY(-2px); }
+    .btn-ghost { background: var(--bg2); color: var(--text); border: 1px solid var(--bg3); }
+    .btn-ghost:hover { background: var(--bg3); transform: translateY(-2px); }
+
+    /* ── Badges ── */
+    .badges { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; color: var(--text3); font-size: .88rem; margin-bottom: 70px; }
+    .badges span::before { content: '✅ '; }
+
+    /* ── Section ── */
+    .section { max-width: 860px; margin: 0 auto 72px; padding: 0 24px; }
+    .section h2 {
+      font-size: 1.45rem; font-weight: 700; margin-bottom: 28px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .section h2::before {
+      content: ''; display: block; width: 4px; height: 1.45rem;
+      background: var(--accent); border-radius: 2px; flex-shrink: 0;
+    }
+
+    /* ── Flow ── */
+    .flow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 8px 0 32px; }
+    .flow-box {
+      background: var(--bg2); border: 1px solid var(--bg3); border-radius: 8px;
+      padding: 10px 18px; font-size: .88rem; text-align: center; line-height: 1.4;
+    }
+    .flow-box small { color: var(--text3); display: block; font-size: .78rem; }
+    .arr { color: var(--accent); font-size: 1.3rem; }
+
+    /* ── Requirements ── */
+    .req-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px; }
+    .req-card {
+      background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--r); padding: 22px;
+    }
+    .req-card h3 { color: var(--accent); margin-bottom: 8px; font-size: 1rem; }
+    .req-card p  { color: var(--text2); font-size: .88rem; }
+
+    /* ── Steps ── */
+    .steps { display: flex; flex-direction: column; gap: 20px; }
+    .step {
+      background: var(--bg2); border: 1px solid var(--bg3); border-radius: var(--r);
+      padding: 26px 30px; display: flex; gap: 22px; align-items: flex-start;
+    }
+    .num {
+      flex-shrink: 0; width: 38px; height: 38px; background: var(--accent); color: #111;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1rem;
+    }
+    .num.q { background: var(--bg3); color: var(--text3); }
+    .step-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
+    .step-body p  { color: var(--text2); font-size: .92rem; }
+
+    code {
+      background: #0d0d0d; color: #fbbf24; padding: 2px 8px;
+      border-radius: 4px; font-family: 'Courier New', monospace; font-size: .88em;
+    }
+    pre {
+      background: #0d0d0d; border: 1px solid var(--bg3); border-radius: 8px;
+      padding: 16px 20px; margin-top: 12px; overflow-x: auto;
+    }
+    pre code { background: none; padding: 0; font-size: .88rem; line-height: 1.6; }
+    .tip {
+      background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3);
+      border-radius: 8px; padding: 10px 16px; color: #a7f3d0;
+      font-size: .88rem; margin-top: 12px;
+    }
+    .mt { margin-top: 12px; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center; padding: 40px 24px; color: var(--text3);
+      border-top: 1px solid var(--bg3); font-size: .88rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>🎬 Premiere Pro 自動無音削除ツール</header>
+
+<main>
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="tag">無料 · オープンソース · Premiere Pro 2024/2025 対応</div>
+    <h1>無音部分を<span>自動で一括カット</span><br>編集時間を大幅短縮</h1>
+    <p>ffmpeg で無音区間を検出 → Premiere Pro のタイムラインから自動リップル削除。手作業ゼロで爆速編集が可能になります。</p>
+
+    <div class="btns">
+      <a href="detect_silence.py"  download class="btn btn-gold">⬇ detect_silence.py</a>
+      <a href="remove_silence.jsx" download class="btn btn-ghost">⬇ remove_silence.jsx</a>
+    </div>
+
+    <div class="badges">
+      <span>Mac / Windows 対応</span>
+      <span>Python 3 · ffmpeg のみ</span>
+      <span>Premiere Pro 2024/2025</span>
+    </div>
+  </div>
+
+  <!-- 流れ -->
+  <div class="section">
+    <h2>ツールの流れ</h2>
+    <div class="flow">
+      <div class="flow-box">① 動画ファイル</div>
+      <span class="arr">→</span>
+      <div class="flow-box">② detect_silence.py<small>ffmpegで無音を検出</small></div>
+      <span class="arr">→</span>
+      <div class="flow-box">③ silence.json<small>無音区間リストを出力</small></div>
+      <span class="arr">→</span>
+      <div class="flow-box">④ remove_silence.jsx<small>Premiere Proで自動カット</small></div>
+      <span class="arr">→</span>
+      <div class="flow-box">⑤ 完成 🎉</div>
+    </div>
+  </div>
+
+  <!-- 必要なもの -->
+  <div class="section">
+    <h2>必要なもの</h2>
+    <div class="req-grid">
+      <div class="req-card">
+        <h3>Python 3</h3>
+        <p>Mac には最初から入っています。<br>Windows は <a href="https://www.python.org/downloads/">python.org</a> からインストール。</p>
+      </div>
+      <div class="req-card">
+        <h3>ffmpeg</h3>
+        <p>Mac: <code>brew install ffmpeg</code><br>Windows: <code>winget install ffmpeg</code><br>または <a href="https://ffmpeg.org/download.html">ffmpeg.org</a> から。</p>
+      </div>
+      <div class="req-card">
+        <h3>Adobe Premiere Pro</h3>
+        <p>2024 / 2025 対応。<br>タイムラインにアクティブなシーケンスが開いている状態で実行してください。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 使い方 -->
+  <div class="section">
+    <h2>使い方（ステップごとの手順）</h2>
+    <div class="steps">
+
+      <div class="step">
+        <div class="num">1</div>
+        <div class="step-body">
+          <h3>2つのファイルをダウンロードして同じフォルダに置く</h3>
+          <p>上のボタンから <code>detect_silence.py</code> と <code>remove_silence.jsx</code> をダウンロードし、デスクトップなど分かりやすい場所に保存してください。</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">2</div>
+        <div class="step-body">
+          <h3>ffmpeg をインストールする（初回のみ）</h3>
+          <p>ターミナル（Mac）またはコマンドプロンプト（Windows）を開いて実行：</p>
+          <pre><code># Mac（Homebrewが必要。未インストールの場合は brew.sh を先に参照）
+brew install ffmpeg
+
+# Windows
+winget install ffmpeg</code></pre>
+          <div class="tip">💡 インストール後、<code>ffmpeg -version</code> と打ってバージョンが表示されれば OK です。</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">3</div>
+        <div class="step-body">
+          <h3>無音区間を検出する</h3>
+          <p>ターミナルでスクリプトを保存したフォルダに移動し、以下を実行：</p>
+          <pre><code>python3 detect_silence.py 動画.mp4 silence.json</code></pre>
+          <p class="mt">感度を細かく調整したい場合はオプションを追加できます：</p>
+          <pre><code>python3 detect_silence.py 動画.mp4 silence.json \
+  --min-silence 0.3 \    # 無音とみなす最小時間（秒）デフォルト: 0.5
+  --threshold -35 \      # dBレベル（大きくすると感度UP）デフォルト: -40
+  --padding 0.1          # カット前後に残す余白（秒）  デフォルト: 0.1</code></pre>
+          <div class="tip">💡 実行すると同じフォルダに <code>silence.json</code> が生成されます。</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">4</div>
+        <div class="step-body">
+          <h3>Premiere Pro でシーケンスを複製しておく（推奨）</h3>
+          <p>プロジェクトパネルのシーケンスを右クリック →「複製」。<br>万が一やり直したい場合に元データを保護できます。</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">5</div>
+        <div class="step-body">
+          <h3>Premiere Pro でスクリプトを実行する</h3>
+          <p>Premiere Pro のメニューから：</p>
+          <pre><code>ファイル → スクリプト → スクリプトファイルを実行
+  → remove_silence.jsx を選択 → 開く</code></pre>
+          <p class="mt">ファイル選択ダイアログが出たら <code>silence.json</code> を選択 → 確認画面で「OK」を押すと削除が始まります。</p>
+          <div class="tip">💡 クリップがタイムラインの 00:00:00 から始まっていることを確認してください。</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">6</div>
+        <div class="step-body">
+          <h3>完了！</h3>
+          <p>「○○箇所の無音区間を削除しました」と表示されれば成功です。<br>削除しすぎた場合は <code>Cmd+Z</code>（Mac）/ <code>Ctrl+Z</code>（Windows）で元に戻せます。</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- トラブルシューティング -->
+  <div class="section">
+    <h2>うまくいかない場合</h2>
+    <div class="steps">
+
+      <div class="step">
+        <div class="num q">?</div>
+        <div class="step-body">
+          <h3>「ffmpeg が見つかりません」と出る</h3>
+          <p>ffmpeg が正しくインストールされていません。ターミナルで <code>brew install ffmpeg</code>（Mac）または <code>winget install ffmpeg</code>（Windows）を再実行してください。</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num q">?</div>
+        <div class="step-body">
+          <h3>「無音区間が見つかりませんでした」と出る</h3>
+          <p><code>--threshold</code> の値を上げてみてください（例：<code>--threshold -35</code> や <code>-30</code>）。録音環境によってノイズレベルが異なります。</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num q">?</div>
+        <div class="step-body">
+          <h3>カットされる位置がずれている</h3>
+          <p>クリップがタイムラインの途中（例: 10秒目）から始まっている場合、<code>remove_silence.jsx</code> の1行目付近にある <code>TIMELINE_OFFSET</code> をその秒数に変更してください。</p>
+          <pre><code>var TIMELINE_OFFSET = 10.0;  // 10秒目から始まる場合</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num q">?</div>
+        <div class="step-body">
+          <h3>「アクティブなシーケンスがありません」と出る</h3>
+          <p>Premiere Pro でタイムラインのシーケンスをクリックしてアクティブにしてから、スクリプトを再実行してください。</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  © 2026 <a href="https://github.com/TatsuyaFushimi">TatsuyaFushimi</a> &nbsp;·&nbsp; MIT License
+</footer>
+
+</body>
+</html>
